@@ -18,7 +18,7 @@ for scale in world.get_shards(ns.Shard("census", scale="all", mode="score"))['ce
     census_means[int(scale.id)] = float(scale.score)
 weights = {key: 1/val for key, val in census_means.items()}
 # adjust for negative stats
-for c_name in ("Wealth Gaps", "Obesity", "Crime", "Charmlessness", "Averageness", "Death Rate"):
+for c_name in ("Wealth Gaps", "Obesity", "Crime", "Charmlessness", "Primitiveness", "Averageness", "Death Rate", "Taxation"):
     c_id = trotterdam.name_to_id[c_name]
     weights[c_id] = -weights[c_id]
 # adjust for stats we don't care about
@@ -62,7 +62,7 @@ def handle_issue(issue):
 issues = nation.get_shards("issues").issues
 if not issues:
     print("No issues")
-elif len(issues) == 1:
+elif len(issues.issue) == 1:
     handle_issue(issues.issue)
 else:
     for issue in issues.issue:
