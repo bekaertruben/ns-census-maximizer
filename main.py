@@ -7,7 +7,7 @@ USER = "<Insert nation name here>"
 PASSWORD = "<Insert password here>"
 CONTACT = "<Nationstates demands that the User Agent contain a method of contacting the Script's owner. An email address is fine>"
 
-api = ns.Nationstates("Instance of https://github.com/bekaertruben/ns-census-maximizer [contact:{}]".format(CONTACT))
+api = ns.Nationstates("Instance of https://github.com/bekaertruben/ns-census-maximizer [contact: {}]".format(CONTACT))
 world = api.world()
 nation = api.nation(USER, password=PASSWORD)
 
