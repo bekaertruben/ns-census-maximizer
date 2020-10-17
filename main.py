@@ -55,8 +55,20 @@ def handle_issue(issue):
             pass
         
         best_option = max(option_scores, key=option_scores.get)
-        nation.command("issue", issue=issue.id, option=best_option)
-        print("Picked option {} for issue #{}".format(best_option, issue.id))
+        if option_scores[best_option] <= 0:
+            nation.command("issue", issue=issue.id, option=-1)
+            print("Dismissed issue #{}. All options are bad.".format(issue.id))
+        else:
+            ranking_changes = nation.command("issue", issue=issue.id, option=best_option).issue.rankings.rank
+            if isinstance(ranking_changes, list):
+                score_inc = calc_results_score(
+                    [(rank.id, rank.change) for rank in ranking_changes]
+                )
+            else:
+                score_inc = calc_results_score(
+                    [(ranking_changes.id, ranking_changes.change)]
+                )
+            print("Picked option {} for issue #{}. This gave a score increase of {}".format(best_option, issue.id, score_inc))
 
 
 issues = nation.get_shards("issues").issues
