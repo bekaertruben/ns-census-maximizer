@@ -62,9 +62,8 @@ def handle_issue(issue):
 issues = nation.get_shards("issues").issues
 if not issues:
     print("No issues")
-elif len(issues.issue) == 1:
+elif isinstance(issues.issue, dict):
     handle_issue(issues.issue)
-else:
+else: # isinstance(issues.issue, list):
     for issue in issues.issue:
         handle_issue(issue)
-    
