@@ -59,16 +59,17 @@ def handle_issue(issue):
             nation.command("issue", issue=issue.id, option=-1)
             print("Dismissed issue #{}. All options are bad.".format(issue.id))
         else:
-            ranking_changes = nation.command("issue", issue=issue.id, option=best_option).issue.rankings.rank
+            response = nation.command("issue", issue=issue.id, option=best_option)
+            ranking_changes = response.issue.rankings.rank
             if isinstance(ranking_changes, list):
-                score_inc = calc_results_score(
-                    [(rank.id, rank.change) for rank in ranking_changes]
-                )
+                results = [(int(rank.id), float(rank.change)) for rank in ranking_changes]
             else:
-                score_inc = calc_results_score(
-                    [(ranking_changes.id, ranking_changes.change)]
+                results = [(int(ranking_changes.id), float(ranking_changes.change)),]
+            score_inc = calc_results_score(results)
+            print(
+                "Picked option {} for issue #{}. This gave a score increase of {} (estimate was {})"
+                    .format(best_option, issue.id, score_inc, option_scores[best_option])
                 )
-            print("Picked option {} for issue #{}. This gave a score increase of {}".format(best_option, issue.id, score_inc))
 
 
 issues = nation.get_shards("issues").issues
