@@ -105,6 +105,15 @@ class CensusMaximizer:
                     "Picked option {} for issue #{}. This gave a score increase of {} (prediction was {})"
                         .format(best_option, issue.id, self.calc_outcome_score(outcome), option_scores[best_option])
                 )
+            for p in (new_policies if isinstance(new_policies, list) else [new_policies,]):
+                self.policies.append(p.name)
+                if log:
+                    print("-> This added the policy '{}'".format(p.name))
+            for p in (removed_policies if isinstance(removed_policies, list) else [removed_policies,]):
+                self.policies.remove(p.name)
+                if log:
+                    print("-> This removed the policy '{}'".format(p.name))
+            
             return best_option, outcome
     
     def solve_issues(self, log = True):
