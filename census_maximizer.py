@@ -74,8 +74,12 @@ class CensusMaximizer:
                 print("Was unable to load Trotterdam page for Issue #{}".format(issue.id))
             return -1, None
 
-        option_scores = {option: self.calc_outcome_score(outcome) for option, outcome in trotterdam_issue.outcomes.items()}
+        option_scores = dict()
+        for option in issue.option:
+            option_id = int(option.id)
+            option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id])
         best_option = max(option_scores, key=option_scores.get)
+
         if option_scores[best_option] <= 0:
             self.nation.command("issue", issue=issue.id, option=-1)
             if log:
