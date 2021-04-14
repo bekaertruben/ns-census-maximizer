@@ -45,7 +45,7 @@ class Outcome:
                 else:
                     out.policy_changes[policy] = PolicyChange((0.5 if sometimes else 1) * (1 if adds else -1))
             else:
-                match = re.search('([A-Z])[\w : -]+', line)
+                match = re.search('[A-Z][\w :-]+', line)
                 if match:
                     c_name = match.group(0).strip()
                     c_id = name_to_id[c_name]

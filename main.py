@@ -1,4 +1,3 @@
-import nationstates as ns
 import census_maximizer as cm
 
 # CONFIG
