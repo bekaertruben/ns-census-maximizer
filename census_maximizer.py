@@ -31,9 +31,12 @@ class CensusMaximizer:
 
         self.census_weights = census_weights_by_world_mean
         self.policy_weights = dict()
+        self.load_policies()
 
-        policies = self.nation.get_shards("policies")
-        self.policies = [p["name"] for p in policies["policies"]["policy"]]
+    def load_policies(self):
+        """ Retrieves the nation's policies from nationstates api """
+        policies = self.nation.get_shards("policies").policies.policy
+        self.policies = [p.name for p in (policies if isinstance(policies, list) else [policies,])]
 
     def adjust_weights(self, census:dict=dict(), policy:dict=dict()):
         """ 1) Sets the solver's census weights according to world means, adjusted by custom values in the following format:
