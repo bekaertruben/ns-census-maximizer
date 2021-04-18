@@ -101,10 +101,8 @@ class CensusMaximizer:
             }
             outcome.policy_changes = dict()
             for p in (new_policies if isinstance(new_policies, list) else [new_policies,]):
-                self.policies.append(p.name)
                 outcome.policy_changes[p.name] = trotterdam.PolicyChange.ADDS
             for p in (removed_policies if isinstance(removed_policies, list) else [removed_policies,]):
-                self.policies.remove(p.name)
                 outcome.policy_changes[p.name] = trotterdam.PolicyChange.REMOVES
 
             if log:
