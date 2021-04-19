@@ -1,5 +1,6 @@
 import nationstates as ns
 import trotterdam
+import copy
 import numpy as np
 
 api = None
@@ -46,7 +47,7 @@ class CensusMaximizer:
             2) Sets the policy weights. For example:
             policy = {"No Internet": -10}
             would lower an outcome's score by 10 if it adds this policy"""
-        self.census_weights = census_weights_by_world_mean
+        self.census_weights = copy.copy(census_weights_by_world_mean)
         for adjustment in census:
             for c_name in census[adjustment]:
                 c_id = trotterdam.name_to_id[c_name]
@@ -142,15 +143,17 @@ class CensusMaximizer:
                 option_picked, outcome = self.solve_issue(issue, log = log)
             print("{} is now gloriously issue-free".format(self.user))
     
-    def census_score_history(self):
+    def census_score_history(self, scales=None):
         """ Returns the history of weighted census scores for the nation. Return format is (timestamp, scores)
             where timestamp is a list of unix timestamp and scores a list of scores.
             these can be plotted using a module like matplotlib to view trends in the nation's score"""
-        response = self.nation.get_shards(ns.Shard("census", scale=list(range(87)), mode="history"))
+        if not scales:
+            scales = list(range(66))+list(range(67, 80)) # Z-day/Residency/Endorsements removed as these make the data really unclear
+        response = self.nation.get_shards(ns.Shard("census", scale=scales, mode="history"))
         min_ts = 1e100
         max_ts = 0
-        for c_id in range(87):
-            for point in response.census.scale[c_id].point:
+        for scale in response.census.scale:
+            for point in scale.point:
                 ts = int(point.timestamp)
                 if ts < min_ts:
                     min_ts = ts
@@ -160,9 +163,10 @@ class CensusMaximizer:
             return # something went wrong
         x = np.arange(min_ts, max_ts, 24*60**2)
         y = np.array([0. for o in x])
-        for c_id in range(87):
+        for scale in response.census.scale:
+            c_id = int(scale.id)
             # we must use interpolation as the timestamps aren't always the same for all scales
-            interp_x = np.array([int(p.timestamp) for p in response.census.scale[c_id].point])
-            interp_y = self.census_weights[c_id] * np.array([float(p.score) for p in response.census.scale[c_id].point])
+            interp_x = np.array([int(p.timestamp) for p in scale.point])
+            interp_y = self.census_weights[c_id] * np.array([float(p.score) for p in scale.point])
             y += np.interp(x, interp_x, interp_y)
         return x, y
