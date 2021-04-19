@@ -1,5 +1,6 @@
 import nationstates as ns
 import trotterdam
+import copy
 import numpy as np
 
 api = None
@@ -46,7 +47,7 @@ class CensusMaximizer:
             2) Sets the policy weights. For example:
             policy = {"No Internet": -10}
             would lower an outcome's score by 10 if it adds this policy"""
-        self.census_weights = census_weights_by_world_mean
+        self.census_weights = copy.copy(census_weights_by_world_mean)
         for adjustment in census:
             for c_name in census[adjustment]:
                 c_id = trotterdam.name_to_id[c_name]
