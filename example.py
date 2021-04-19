@@ -1,4 +1,5 @@
 import census_maximizer as cm
+import matplotlib.pyplot as plt # if not installed, run `pip install matplotlib`
 
 # CONFIG
 USER     = "<Insert nation name here>"
@@ -15,4 +16,10 @@ solver.adjust_weights(census = {
 }, policy={
     "No Internet": -10
 })
+
+# solve issues for the nation:
 solver.solve_issues()
+
+# plot overall weighted census score over time (password is not required for this)
+plt.plot(*solver.census_score_history())
+plt.show()

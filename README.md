@@ -9,7 +9,7 @@ The required modules can be installed using pip: `pip install -r requirements.tx
 ## Configuration and Usage
 To use one should change the `USER` and `PASSWORD` variables to the nation's login credentials. For use of the Nationstates API you should also provide contact details of some shape or form in `CONTACT`.
 
-Sample usage is illustrated in `main.py`. To configure what census scales to prioritize as well as what scores to attribute to policies, modify the `census` and `policy` dicts passed to `CensusMaximizer.adjust_weights`. For example:
+Sample usage is illustrated in `example.py`. To configure what census scales to prioritize as well as what scores to attribute to policies, modify the `census` and `policy` dicts passed to `CensusMaximizer.adjust_weights`. For example:
 
 ```py
 solver.adjust_weights(census = {

@@ -1,5 +1,6 @@
 import nationstates as ns
 import trotterdam
+import numpy as np
 
 api = None
 world = None
@@ -12,7 +13,7 @@ def init(contact):
     api = ns.Nationstates("Instance of https://github.com/bekaertruben/ns-census-maximizer [contact: {}]".format(contact))
     world = api.world()
     census_means = dict()
-    for scale in world.get_shards(ns.Shard("census", scale="all", mode="score"))['census']['scale']:
+    for scale in world.get_shards(ns.Shard("census", scale="all", mode="score")).census.scale:
         census_means[int(scale.id)] = float(scale.score)
     census_weights_by_world_mean = {key: 1/val for key, val in census_means.items()}
 
@@ -24,7 +25,7 @@ class CensusMaximizer:
     census_weights: dict
     policy_weights: dict
 
-    def __init__(self, user, password):
+    def __init__(self, user, password=None):
         self.user = user
         self.password = password
         self.nation = api.nation(user, password=password)
@@ -46,10 +47,10 @@ class CensusMaximizer:
             policy = {"No Internet": -10}
             would lower an outcome's score by 10 if it adds this policy"""
         self.census_weights = census_weights_by_world_mean
-        for adj in census:
-            for c_name in census[adj]:
+        for adjustment in census:
+            for c_name in census[adjustment]:
                 c_id = trotterdam.name_to_id[c_name]
-                self.census_weights[c_id] = adj * census_weights_by_world_mean[c_id]
+                self.census_weights[c_id] = adjustment * census_weights_by_world_mean[c_id]
         self.policy_weights = policy
     
     def calc_outcome_score(self, outcome:trotterdam.Outcome):
@@ -123,6 +124,9 @@ class CensusMaximizer:
     
     def solve_issues(self, log = True):
         """ Solves all issues """
+        if not self.password:
+            raise ValueError("Can't solve issues if the CensusMaximizer isn't initialised with a password")
+
         if log:
             print("Solving issues for {}".format(self.user))
 
@@ -137,3 +141,28 @@ class CensusMaximizer:
             for issue in issues:
                 option_picked, outcome = self.solve_issue(issue, log = log)
             print("{} is now gloriously issue-free".format(self.user))
+    
+    def census_score_history(self):
+        """ Returns the history of weighted census scores for the nation. Return format is (timestamp, scores)
+            where timestamp is a list of unix timestamp and scores a list of scores.
+            these can be plotted using a module like matplotlib to view trends in the nation's score"""
+        response = self.nation.get_shards(ns.Shard("census", scale=list(range(87)), mode="history"))
+        min_ts = 1e100
+        max_ts = 0
+        for c_id in range(87):
+            for point in response.census.scale[c_id].point:
+                ts = int(point.timestamp)
+                if ts < min_ts:
+                    min_ts = ts
+                if ts > max_ts:
+                    max_ts = ts
+        if max_ts == 0:
+            return # something went wrong
+        x = np.arange(min_ts, max_ts, 24*60**2)
+        y = np.array([0. for o in x])
+        for c_id in range(87):
+            # we must use interpolation as the timestamps aren't always the same for all scales
+            interp_x = np.array([int(p.timestamp) for p in response.census.scale[c_id].point])
+            interp_y = self.census_weights[c_id] * np.array([float(p.score) for p in response.census.scale[c_id].point])
+            y += np.interp(x, interp_x, interp_y)
+        return x, y

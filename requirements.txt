@@ -1,3 +1,5 @@
-nationstates==3.0.2.7
-requests==2.25.1
-lxml==4.6.3
+# If there are compatibility errors just set all these to == and use a venv
+nationstates>=3.0.2.7
+requests>=2.25.1
+lxml>=4.6.3
+numpy>=1.20.2
