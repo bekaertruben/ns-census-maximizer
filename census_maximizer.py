@@ -148,7 +148,7 @@ class CensusMaximizer:
             where timestamp is a list of unix timestamp and scores a list of scores.
             these can be plotted using a module like matplotlib to view trends in the nation's score"""
         if not scales:
-            scales = list(range(66))+list(range(67, 80)) # Z-day/Residency/Endorsements removed as these make the data really unclear
+            scales = list(range(65)) + list(range(67, 80)) # Z-day and WA-stats as well as Residency removed as these make the data really unclear
         response = self.nation.get_shards(ns.Shard("census", scale=scales, mode="history"))
         min_ts = 1e100
         max_ts = 0
