@@ -6,17 +6,16 @@ import numpy as np
 api = None
 world = None
 
-census_weights_by_world_mean = None
+with open("census_distribution.txt", "r") as file:
+    census_distribution = eval("".join(file.readlines()))
+    weights_by_world_mean = {key: 1/abs(val[0]) for key, val in census_distribution.items()}
+    weights_by_world_spread = {key: 1/abs(val[1]) for key, val in census_distribution.items()}
 
 def init(contact):
     """ Sets up connection to the nationstates api """
-    global api, world, census_weights_by_world_mean
+    global api, world
     api = ns.Nationstates("Instance of https://github.com/bekaertruben/ns-census-maximizer [contact: {}]".format(contact))
     world = api.world()
-    census_means = dict()
-    for scale in world.get_shards(ns.Shard("census", scale="all", mode="score")).census.scale:
-        census_means[int(scale.id)] = float(scale.score)
-    census_weights_by_world_mean = {key: 1/val for key, val in census_means.items()}
 
 class CensusMaximizer:
     """ Solves issues by calculation maximum world census score increases """
@@ -31,7 +30,7 @@ class CensusMaximizer:
         self.password = password
         self.nation = api.nation(user, password=password)
 
-        self.census_weights = census_weights_by_world_mean
+        self.census_weights = copy.copy(weights_by_world_spread)
         self.policy_weights = dict()
         self.load_policies()
 
@@ -41,17 +40,16 @@ class CensusMaximizer:
         self.policies = [p.name for p in (policies if isinstance(policies, list) else [policies,])]
 
     def adjust_weights(self, census:dict=dict(), policy:dict=dict()):
-        """ 1) Sets the solver's census weights according to world means, adjusted by custom values in the following format:
+        """ 1) Adjusts the current census_weights (default is weights_by_world_spread) by custom values in the following format:
             census = {0 : ("Nudity",), -1 : ("Death Rate", "Taxation"), 3: ("Civil Rights",)}
             This makes the solver ignore Nudity, minimise Death Rate and Taxation, and weigh Civil Rights more in its calclation of scores
             2) Sets the policy weights. For example:
             policy = {"No Internet": -10}
             would lower an outcome's score by 10 if it adds this policy"""
-        self.census_weights = copy.copy(census_weights_by_world_mean)
         for adjustment in census:
             for c_name in census[adjustment]:
                 c_id = trotterdam.name_to_id[c_name]
-                self.census_weights[c_id] = adjustment * census_weights_by_world_mean[c_id]
+                self.census_weights[c_id] *= adjustment
         self.policy_weights = policy
     
     def calc_outcome_score(self, outcome:trotterdam.Outcome):
@@ -148,7 +146,7 @@ class CensusMaximizer:
             where timestamp is a list of unix timestamp and scores a list of scores.
             these can be plotted using a module like matplotlib to view trends in the nation's score"""
         if not scales:
-            scales = list(range(65)) + list(range(67, 80)) # Z-day and WA-stats as well as Residency removed as these make the data really unclear
+            scales = list(range(65)) + list(range(67, 80)) + [85] # Z-day and WA-stats as well as Residency removed as these make the data really unclear
         response = self.nation.get_shards(ns.Shard("census", scale=scales, mode="history"))
         min_ts = 1e100
         max_ts = 0
@@ -168,5 +166,12 @@ class CensusMaximizer:
             # we must use interpolation as the timestamps aren't always the same for all scales
             interp_x = np.array([int(p.timestamp) for p in scale.point])
             interp_y = self.census_weights[c_id] * np.array([float(p.score) for p in scale.point])
+            # Black market does something odd on 2019-11-19 (see https://www.nationstates.net/page=news/2019/index.html)
+            # We need to adjust for this (the other changes are more negligible)
+            if c_id == 79:
+                i = 0
+                while i < len(interp_x) and interp_x[i] < 1574164800:
+                    i += 1
+                interp_y[:i] /= 6 # this is an approximation and the exact number will vary for all nations. a jump will still be seen, but that is fine
             y += np.interp(x, interp_x, interp_y)
         return x, y
