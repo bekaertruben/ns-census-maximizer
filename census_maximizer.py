@@ -7,7 +7,7 @@ api = None
 world = None
 
 with open("census_distribution.txt", "r") as file:
-    census_distribution = eval("".join(file.readlines()))
+    census_distribution = eval("".join(file.readlines())) # yes, I'm aware that this is evil :P
     weights_by_world_mean = {key: 1/abs(val[0]) for key, val in census_distribution.items()}
     weights_by_world_spread = {key: 1/abs(val[1]) for key, val in census_distribution.items()}
 
@@ -80,7 +80,16 @@ class CensusMaximizer:
         option_scores = dict()
         for option in issue.option:
             option_id = int(option.id)
-            option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id])
+            # special cases where trotterdam options do not correspond to api options:
+            if issue.id == '144' and option_id == 2:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[1])
+            elif issue.id == '906' and option_id == 4:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[3])
+            elif issue.id == '1187' and option_id == 3:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[2])
+            # general case:
+            else:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id])
         best_option = max(option_scores, key=option_scores.get)
 
         if option_scores[best_option] <= 0:
@@ -89,7 +98,7 @@ class CensusMaximizer:
                 print("Dismissed issue #{}. All options are bad.".format(issue.id))
             return -1, None
         else:
-            response = self.nation.command("issue", issue=issue.id, option=best_option).issue
+            response = self.nation.pick_issue(issue.id, best_option).issue
             rankings = response.rankings.rank if "rankings" in response else []
             new_policies = response.new_policies.policy if "new_policies" in response else []
             removed_policies = response.removed_policies.policy if "removed_policies" in response else []
@@ -107,7 +116,7 @@ class CensusMaximizer:
 
             if log:
                 print(
-                    "Picked option {} for issue #{}. This gave a score increase of {} (prediction was {})"
+                    "Picked option {} for issue #{}. This gave a score increase of {:.6f} (prediction was {:.6f})"
                         .format(best_option, issue.id, self.calc_outcome_score(outcome), option_scores[best_option])
                 )
             for p in (new_policies if isinstance(new_policies, list) else [new_policies,]):
