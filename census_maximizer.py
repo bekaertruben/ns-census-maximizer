@@ -6,6 +6,8 @@ import numpy as np
 api = None
 world = None
 
+skip_issues = [0, 0, 0, 0]  # replace with the issue IDs you want to skip
+
 with open("census_distribution.txt", "r") as file:
     census_distribution = eval("".join(file.readlines())) # yes, I'm aware that this is evil :P
     weights_by_world_mean = {key: 1/abs(val[0]) for key, val in census_distribution.items()}
@@ -92,11 +94,12 @@ class CensusMaximizer:
                 option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id])
         best_option = max(option_scores, key=option_scores.get)
 
-        if option_scores[best_option] <= 0:
-            self.nation.command("issue", issue=issue.id, option=-1)
-            if log:
-                print("Dismissed issue #{}. All options are bad.".format(issue.id))
-            return -1, None
+        if  int(issue.id) in skip_issues or option_scores[best_option] <= 0:
+            """ Dissmisses an issue if it is in skipp_issues list or based on the score treshold """
+            self.nation.command("issue", issue=issue.id, option=-1)	
+            if log:	
+                print("Dismissed issue #{}. All options are bad or the issue is in the skip list.".format(issue.id))	
+            return -1, None	
         else:
             response = self.nation.pick_issue(issue.id, best_option).issue
             rankings = response.rankings.rank if "rankings" in response else []
