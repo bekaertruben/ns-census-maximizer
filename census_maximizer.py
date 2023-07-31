@@ -79,14 +79,29 @@ class CensusMaximizer:
 
         option_scores = dict()
         for option in issue.option:
-            option_id = int(option.id)
+            if isinstance(option, str):
+                option_id = int(issue.option.id)
+            else:
+                option_id = int(option.id)
             # special cases where trotterdam options do not correspond to api options:
-            if issue.id == '144' and option_id == 2:
+            if issue.id == '94' and option_id > 2:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id-1])
+            elif issue.id == '144' and option_id == 2:
                 option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[1])
+            elif issue.id == '603' and option_id > 2:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id-1])
+            elif issue.id == '685' and option_id > 1:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id-1])
+            elif issue.id == '779' and option_id == 3:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[2])
             elif issue.id == '906' and option_id == 4:
                 option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[3])
             elif issue.id == '1187' and option_id == 3:
                 option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[2])
+            elif issue.id == '1415' and option_id == 3:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[2])
+            elif issue.id == '1483' and option_id > 1:
+                option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id-1])
             # general case:
             else:
                 option_scores[option_id] = self.calc_outcome_score(trotterdam_issue.outcomes[option_id])
